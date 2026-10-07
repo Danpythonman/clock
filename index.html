@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Clock</title>
+    <script type="module" src="/src/main.js"></script>
+  </head>
+  <body>
+    <main class="clock" id="clock">
+      <svg class="analog" id="analog" viewBox="0 0 200 200" aria-hidden="true">
+        <g id="ticks"></g>
+        <line class="hand hour" id="hour" x1="100" y1="100" x2="100" y2="54" />
+        <line class="hand minute" id="minute" x1="100" y1="100" x2="100" y2="28" />
+        <line class="hand second" id="second" x1="100" y1="116" x2="100" y2="22" />
+        <circle class="pin" cx="100" cy="100" r="3.5" />
+      </svg>
+
+      <div class="digital" id="digital" aria-live="off">
+        <div class="time" id="time"><span id="hm"></span><span class="sec" id="sec"></span><span class="ampm" id="ampm"></span></div>
+        <div class="date" id="date"></div>
+      </div>
+    </main>
+
+    <nav class="controls" id="controls" aria-label="Clock settings">
+      <div class="group" role="group" aria-label="Display" data-setting="mode">
+        <button type="button" data-value="digital">Digital</button>
+        <button type="button" data-value="analog">Analog</button>
+        <button type="button" data-value="both">Both</button>
+      </div>
+
+      <div class="group swatches" role="group" aria-label="Theme" data-setting="theme">
+        <button type="button" data-value="dark" aria-label="Dark theme"></button>
+        <button type="button" data-value="light" aria-label="Light theme"></button>
+        <button type="button" data-value="amber" aria-label="Amber theme"></button>
+        <button type="button" data-value="ice" aria-label="Ice theme"></button>
+      </div>
+
+      <div class="group" role="group" aria-label="Font" data-setting="font">
+        <button type="button" data-value="sans">Sans</button>
+        <button type="button" data-value="mono">Mono</button>
+        <button type="button" data-value="serif">Serif</button>
+      </div>
+
+      <div class="group" role="group" aria-label="Options">
+        <button type="button" data-toggle="h24">24h</button>
+        <button type="button" data-toggle="seconds">Seconds</button>
+        <button type="button" data-toggle="date">Date</button>
+      </div>
+
+      <div class="group">
+        <button type="button" id="fullscreen">Fullscreen</button>
+        <span class="wake" id="wake"></span>
+      </div>
+    </nav>
+  </body>
+</html>
