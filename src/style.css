@@ -13,9 +13,16 @@
 [data-theme="amber"] { --bg: #0a0703; --fg: #ffb000; --accent: #ff6a00; }
 [data-theme="ice"]   { --bg: #0c1219; --fg: #d6e6ff; --accent: #6cb6ff; }
 
-/* Fonts (system stacks only, nothing to download) */
+/* Fonts (system stacks, plus a bundled 7-segment face) */
+@font-face {
+  font-family: "DSEG7 Classic";
+  src: url("./fonts/DSEG7Classic-Regular.woff2") format("woff2");
+  font-display: block;
+}
+
 [data-font="mono"]  { --font: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace; }
 [data-font="serif"] { --font: ui-serif, "New York", Georgia, "Times New Roman", serif; }
+[data-font="seg"]   { --font: "DSEG7 Classic", ui-monospace, monospace; }
 
 html, body {
   margin: 0;
@@ -36,22 +43,77 @@ body {
 
 body.idle { cursor: none; }
 
-/* Layout */
+/* Layout: a clock panel and a timer panel, each with an analog face and a digital readout */
 .clock {
   position: fixed;
   inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Share of the screen height the panels may use; a page heading takes the rest. */
+:root { --room: 1; }
+.has-heading { --room: 0.8; }
+
+.heading {
+  box-sizing: border-box;
+  max-width: 92vw;
+  margin: 0 0 5vmin;
+  text-align: center;
+  font: 600 clamp(20px, 6vmin, 64px)/1.15 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  /* Wrap to at most two lines */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.heading:empty { display: none; }
+
+.panels {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6vmin;
 }
 
+.panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.face {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6vmin;
+}
+
+.title {
+  margin: 0 0 3vmin;
+  max-width: 88vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 clamp(16px, 4.5vmin, 48px)/1.2 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  letter-spacing: 0.02em;
+  color: var(--dim);
+}
+.title:empty { display: none; }
+[data-show="both"] .title { max-width: 44vw; }
+
+[data-show="clock"] #timer-panel,
+[data-show="timer"] #clock-panel,
 [data-mode="digital"] .analog,
 [data-mode="analog"] .digital { display: none; }
 
 .analog {
   flex: none;
-  width: min(86vw, 86vh);
+  width: min(86vw, calc(86vh * var(--room)));
   height: auto;
   aspect-ratio: 1;
 }
@@ -62,13 +124,30 @@ body.idle { cursor: none; }
   line-height: 1;
 }
 
-[data-mode="both"] .analog  { width: min(64vh, 42vw); }
+[data-mode="both"] .analog  { width: min(calc(64vh * var(--room)), 42vw); }
 [data-mode="both"] .digital { width: 44vw; }
 
+/* Clock and timer side by side: each panel becomes a column, top-aligned so the titles line up */
+[data-show="both"] .panels { align-items: flex-start; }
+[data-show="both"] .face { flex-direction: column; gap: 4vmin; }
+[data-show="both"] .analog  { width: min(44vw, calc(80vh * var(--room))); }
+[data-show="both"] .digital { width: 44vw; }
+[data-show="both"][data-mode="both"] .analog  { width: min(40vw, calc(44vh * var(--room))); }
+[data-show="both"][data-mode="both"] .digital { width: 42vw; }
+
 @media (orientation: portrait) {
-  .clock { flex-direction: column; }
-  [data-mode="both"] .analog  { width: min(80vw, 46vh); }
+  .panels, .face { flex-direction: column; }
+  [data-mode="both"] .analog  { width: min(80vw, calc(46vh * var(--room))); }
   [data-mode="both"] .digital { width: 88vw; }
+
+  /* Clock and timer stacked: each panel becomes a row */
+  [data-show="both"] .panels { align-items: center; }
+  [data-show="both"] .face { flex-direction: row; }
+  [data-show="both"] .title { max-width: 88vw; }
+  [data-show="both"] .analog  { width: min(80vw, calc(40vh * var(--room))); }
+  [data-show="both"] .digital { width: 88vw; }
+  [data-show="both"][data-mode="both"] .analog  { width: min(38vw, calc(36vh * var(--room))); }
+  [data-show="both"][data-mode="both"] .digital { width: 48vw; }
 }
 
 /* Digital (font-size is set by JS to fit the box) */
@@ -88,7 +167,8 @@ body.idle { cursor: none; }
   color: var(--dim);
 }
 
-.date {
+.date,
+.label {
   margin-top: 0.45em;
   font-size: 0.13em;
   letter-spacing: 0.04em;
@@ -96,6 +176,11 @@ body.idle { cursor: none; }
 }
 
 .no-date .date { display: none; }
+
+/* 7-segment can't spell well, so AM/PM and the date keep a regular face. */
+[data-font="seg"] .ampm,
+[data-font="seg"] .date,
+[data-font="seg"] .label { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; }
 
 /* Analog */
 .tick { stroke: var(--dim); stroke-width: 1; stroke-linecap: round; }
@@ -109,6 +194,17 @@ body.idle { cursor: none; }
 
 .no-seconds .second { display: none; }
 .no-seconds .pin    { fill: var(--fg); }
+
+/* Timer */
+.dial { fill: var(--faint); }
+.fill { fill: var(--accent); fill-opacity: 0.55; }
+.timer-hand { stroke: var(--accent); stroke-width: 2; }
+#timer-panel .pin { fill: var(--accent); }
+
+.timer-paused #timer-panel .time { color: var(--dim); }
+.timer-done #timer-panel .time { color: var(--accent); animation: blink 1s steps(1) infinite; }
+
+@keyframes blink { 50% { opacity: 0.25; } }
 
 /* Controls */
 .controls {
@@ -158,6 +254,8 @@ body.idle .controls {
 .controls button[aria-pressed="true"] { color: var(--fg); background: var(--faint); }
 .controls button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
+.controls [hidden] { display: none; }
+
 .swatches { gap: 8px; padding: 0 4px; }
 .swatches button {
   width: 18px;
@@ -190,6 +288,64 @@ body.idle .controls {
 }
 .wake.on::before { background: var(--accent); }
 
+/* Dialogs */
+.dialog {
+  box-sizing: border-box;
+  width: min(360px, calc(100vw - 32px));
+  padding: 20px;
+  color: var(--fg);
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: color-mix(in srgb, var(--fg) 6%, var(--bg));
+  border: 1px solid var(--faint);
+  border-radius: 14px;
+}
+.dialog::backdrop { background: rgb(0 0 0 / 0.5); }
+
+.dialog h2 { margin: 0 0 16px; font-size: 16px; font-weight: 600; }
+
+.dialog label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+  color: var(--dim);
+}
+
+.dialog input {
+  font: 18px/1.2 ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--faint);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.dialog input.text { font-family: inherit; }
+.dialog input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+.dialog button {
+  font: inherit;
+  color: var(--dim);
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  padding: 7px 10px;
+  cursor: pointer;
+}
+.dialog button:hover { color: var(--fg); background: var(--faint); }
+.dialog button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.dialog button.primary { color: var(--bg); background: var(--accent); }
+.dialog [hidden] { display: none; }
+
+.presets { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.presets button { padding: 5px 9px; border: 1px solid var(--faint); }
+
+.hint  { margin: 10px 0 0; font-size: 12px; color: var(--dim); }
+.error { margin: 6px 0 0; min-height: 1.4em; font-size: 13px; color: var(--accent); }
+
+.actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.actions .spacer { flex: 1; }
+
 @media (prefers-reduced-motion: reduce) {
   body, .controls { transition: none; }
+  .timer-done #timer-panel .time { animation: none; }
 }
